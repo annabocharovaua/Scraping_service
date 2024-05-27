@@ -40,8 +40,8 @@ class JobScheduler:
         self.keep_running = False
 
     def run_scheduler(self):
-        schedule.every(1).minutes.do(self.job)
+        schedule.every(10).minutes.do(self.job)
         print("start run_scheduler. keep_running = ", self.keep_running)
         while self.keep_running:
             schedule.run_pending()
-            time.sleep(1)
+            time.sleep(10)
