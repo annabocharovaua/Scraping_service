@@ -151,7 +151,7 @@ class JobSearch:
                             print("Div з класом 'job-list-item__title' не знайдено.")
 
                         cont = li.find('div', attrs={'class': 'job-list-item__description'})
-                        span = cont.find('span')
+                        span = cont.find('div', attrs={'class': 'js-truncated-text'})
                         content = span.text
                         company = 'No name'
                         span_salary = li.find('span', attrs={'class': 'public-salary-item'})
@@ -291,7 +291,7 @@ class JobSearch:
     def contains_language(self, description, language):
         return language.lower() in description.lower()
 
-    def jooble(self, url, language=None):
+    def jooble(self, url):
         jobs = []
         errors = []
         if url:
@@ -311,21 +311,24 @@ class JobSearch:
                         p_salary = div_info.find('p')
                         if p_salary:
                             salary = p_salary.text
-                        description = div_info('div', class_='PAM72f')
+                        description = div_info.find('div', class_='PAM72f')
                         div_title = div.find('div', class_='L4BhzZ')
-                        p_company = div_title.find('p', class_='z6WlhX')
+                        # if not div_title:
+                        #     print("div:", div)
+                        p_company = div.find('p', class_='z6WlhX')
                         company = ''
                         if p_company:
                             company = p_company.text
-                        img = div_title.find('img')
-                        if img:
+                        img = div.find('img', class_='_3hk3rl')
+                        if img and len(img['src']) < 2048:
                             img_src = img['src']
                         else:
                             img_src = 'https://play-lh.googleusercontent.com/JCQ1opom-Kay8f3xVs9VfKmDKsKD3md5uKLJf93gsYAawE6UpzgN_2fALgS0mKOcNw=s256-rw'
                         # print(jooble_help(href, language))
-                        jobs.append({'title': title, 'img_source': img_src, 'url': href,
-                                     'description': description[0].text, 'company': company,
-                                     'salary': salary, 'site': "jooble"})
+                        if len(href) < 2048:
+                            jobs.append({'title': title, 'img_source': img_src, 'url': href,
+                                         'description': description.text, 'company': company,
+                                         'salary': salary, 'site': "jooble"})
                 else:
                     errors.append({'url': url, 'title': "Div does not exists"})
             else:
@@ -426,8 +429,8 @@ class JobSearch:
                                                       )
         print("JOOBLE URL: ", url_jooble)
         jobs_jooble, errors_jooble = self.jooble(url_jooble)
-        print("JOOBLE: ", jobs_jooble)
-        print("JOOBLE: ", errors_jooble)
+        # print("JOOBLE: ", jobs_jooble)
+        # print("JOOBLE: ", errors_jooble)
         if not on_the_background:
             self.add_vacancies_to_db(request, chat_id, jobs_jooble, "jooble")
             self.submit_vacancy(jobs_jooble, chat_id)
@@ -437,7 +440,7 @@ class JobSearch:
     def submit_vacancy(self, jobs, chat_id, is_unique_vacancy=False):
         print("submit_vacancy")
         for job in jobs:
-            print(job)
+            #print(job)
             try:
                 # print("job['img_source'] = ", job['img_source'])
                 if is_unique_vacancy:

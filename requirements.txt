@@ -1,0 +1,7 @@
+telebot~=0.0.5
+requests~=2.32.1
+selenium~=4.21.0
+beautifulsoup4~=4.12.3
+python-dateutil~=2.9.0.post0
+mysql~=0.0.3
+mysql-connector-python~=8.4.0
