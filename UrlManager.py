@@ -91,10 +91,13 @@ class UrlManager:
             base_url += '-' + params["position"].lower()
             del params["position"]
         base_url += '/'
+
         if city == "remote":
             params["scheduleIds"] = 3
         elif city:
             base_url += city.lower() + '/'
+        else:
+            base_url += "ukraine" + '/'
 
         if params["experience"] == EXPERIENCE.WITHOUT_EXPERIENCE.value:
             params["experienceType"] = "true"
