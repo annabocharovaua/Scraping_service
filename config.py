@@ -8,11 +8,10 @@ technical_specialties = ["Повернутися в головне меню", "Q
 nontechnical_specialties = ["Повернутися в головне меню", "Marketing", "Sales", "Lead Generation", "SEO", "HR Recruiter", "Customer Support", "Technical Support", "Head", "Chief", "Finances"]
 
 db_config = {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "user": "root",
-    "password": "root",
-    "database": "scraping_service"
+    "host": "eu-cluster-west-01.k8s.cleardb.net",
+    "user": "bd3ccc9afd6ff2",
+    "password": "b9eba1d6",
+    "database": "heroku_4004346b6678e91"
 }
 
 
