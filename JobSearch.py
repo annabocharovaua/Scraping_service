@@ -313,8 +313,6 @@ class JobSearch:
                             salary = p_salary.text
                         description = div_info.find('div', class_='PAM72f')
                         div_title = div.find('div', class_='L4BhzZ')
-                        # if not div_title:
-                        #     print("div:", div)
                         p_company = div.find('p', class_='z6WlhX')
                         company = ''
                         if p_company:
