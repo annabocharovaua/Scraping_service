@@ -1,6 +1,7 @@
-from datetime import time
+import time
 from itertools import chain
 from Request import Request
+import schedule
 
 class JobScheduler:
     def __init__(self, db_manager, job_search):
@@ -38,7 +39,7 @@ class JobScheduler:
     def stop_scheduler(self):
         self.keep_running = False
 
-    def run_scheduler(self, schedule=None):
+    def run_scheduler(self):
         schedule.every(1).minutes.do(self.job)
         print("start run_scheduler. keep_running = ", self.keep_running)
         while self.keep_running:
