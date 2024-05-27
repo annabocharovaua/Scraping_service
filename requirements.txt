@@ -5,4 +5,4 @@ beautifulsoup4~=4.12.3
 python-dateutil~=2.9.0.post0
 mysql~=0.0.3
 mysql-connector-python~=8.4.0
-webdriver_manager
+webdriver_manager==3.8.3
