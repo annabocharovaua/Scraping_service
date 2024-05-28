@@ -446,8 +446,11 @@ class JobSearch:
                     self.bot.send_photo(chat_id, job['img_source'], caption=caption_, parse_mode='HTML')
                 else:
                     caption_, markup_ = format_vacancy(job)
-                    self.bot.send_photo(chat_id, job['img_source'], caption=caption_, reply_markup=markup_,
-                                   parse_mode='HTML')
+                    try:
+                        self.bot.send_photo(chat_id, job['img_source'], caption=caption_, reply_markup=markup_,
+                                       parse_mode='HTML')
+                    except Exception as e:
+                        print("Error: ", str(e))
             except ApiTelegramException as e:
                 print(f"An error occurred while sending the photo: {e}. URL: {job['img_source']}. Skip vacancy.")
 
