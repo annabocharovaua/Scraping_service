@@ -9,11 +9,10 @@ nontechnical_specialties = ["Повернутися в головне меню",
 
 db_config = {
     "host": "eu-cluster-west-01.k8s.cleardb.net",
-    "user": "bd3ccc9afd6ff2",
-    "password": "b9eba1d6",
-    "database": "heroku_4004346b6678e91"
+    "user": "ba14957429faae",
+    "password": "b31894be",
+    "database": "heroku_1eb8c73e29d3934"
 }
-
 
 
 headers = [
