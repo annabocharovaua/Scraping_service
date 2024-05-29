@@ -18,13 +18,13 @@ class JobScheduler:
           print("Start searching on background")
           unique_vacancies = self.job_search.start_search_and_send_unique_vacancy(request_from_db, 0, on_the_background = True)
           jobs_work, errors_work = self.job_search.start_search_and_send_workua_vacancy(request_from_db, 0, on_the_background = True)
-          # jobs_dou, errors_dou = self.job_search.start_search_and_send_dou_vacancy(request_from_db, 0, on_the_background = True)
-          # jobs_djinni, errors_djinni = self.job_search.start_search_and_send_djinni_vacancy(request_from_db, 0, on_the_background = True)
-          # jobs_rabota, errors_robot = self.job_search.start_search_and_send_robota_vacancy(request_from_db, 0, on_the_background = True)
-          # jobs_jooble, errors_jooble = self.job_search.start_search_and_send_jooble_vacancy(request_from_db, 0, on_the_background = True)
+          jobs_dou, errors_dou = self.job_search.start_search_and_send_dou_vacancy(request_from_db, 0, on_the_background = True)
+          jobs_djinni, errors_djinni = self.job_search.start_search_and_send_djinni_vacancy(request_from_db, 0, on_the_background = True)
+          jobs_rabota, errors_robot = self.job_search.start_search_and_send_robota_vacancy(request_from_db, 0, on_the_background = True)
+          jobs_jooble, errors_jooble = self.job_search.start_search_and_send_jooble_vacancy(request_from_db, 0, on_the_background = True)
           print("End searching on background")
 
-          vacancies = list(chain(jobs_work))#, jobs_dou, jobs_djinni, jobs_rabota, jobs_jooble))
+          vacancies = list(chain(jobs_work, jobs_dou, jobs_djinni, jobs_rabota, jobs_jooble))
           #vacancies = [jobs_work]#, jobs_dou, jobs_djinni, jobs_rabota, jobs_jooble]
           print("Start checking finding vacancies")
           for vacancy in unique_vacancies:
