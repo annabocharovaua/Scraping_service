@@ -1,28 +1,24 @@
 import threading
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import telebot
 from telebot import types
+
+from FormatVacancy import FormatVacancy
 from JobSearch import JobSearch
+from PaymentManager import PaymentManager
 from Request import Request
 from Stage import STAGE
 from UniqueVacancy import UniqueVacancy
-from Vacancy import format_unique_vacancy, send_job_offer_instructions
 from config import categories, programming_languages, technical_specialties, nontechnical_specialties, positions, \
     cities, headers
-
-def get_end_subscription_date():
-    current_date = datetime.now().date()
-    return current_date + relativedelta(months=1)
 
 class BotManager:
     def __init__(self, token, payments_token, db_manager, user_manager, admin_manager):
         self.bot = telebot.TeleBot(token)
-        self.payments_token = payments_token
         self.db_manager = db_manager
         self.db_manager.execute_query("UPDATE users SET stage = 0")
         self.user_manager = user_manager
         self.admin_manager = admin_manager
+        self.payment_manager = PaymentManager(self.bot, payments_token, self.db_manager )
         self.job_search = JobSearch(headers, db_manager, self.bot)
         self.users_vacancies = {}
         self.users_requests = {}
@@ -33,16 +29,16 @@ class BotManager:
 
     def setup_handlers(self):
         self.bot.message_handler(commands=['start'])(self.start)
-        self.bot.message_handler(commands=['pay1'])(self.pay1_command)
-        self.bot.message_handler(commands=['pay2'])(self.pay2_command)
-        self.bot.message_handler(commands=['pay3'])(self.pay3_command)
+        self.bot.message_handler(commands=['pay1'])(self.payment_manager.pay1_command)
+        self.bot.message_handler(commands=['pay2'])(self.payment_manager.pay2_command)
+        self.bot.message_handler(commands=['pay3'])(self.payment_manager.pay3_command)
         self.bot.message_handler(content_types=['text'])(self.handle_text)
         self.bot.callback_query_handler(func=lambda call: call.data.startswith('delete_request_'))(self.delete_request)
         self.bot.callback_query_handler(func=lambda call: call.data.startswith('delete_new_unique_vacancy_'))(self.delete_new_unique_vacancy)
         self.bot.callback_query_handler(func=lambda call: call.data.startswith('approve_new_unique_vacancy_'))(self.approve_new_unique_vacancy)
         self.bot.callback_query_handler(func=lambda call: call.data.startswith('delete_unique_vacancy_'))(self.delete_unique_vacancy)
-        self.bot.pre_checkout_query_handler(func=lambda query: True)(self.pre_checkout_query)
-        self.bot.message_handler(content_types=['successful_payment'])(self.successful_payment)
+        self.bot.pre_checkout_query_handler(func=lambda query: True)(self.payment_manager.pre_checkout_query)
+        self.bot.message_handler(content_types=['successful_payment'])(self.payment_manager.successful_payment)
 
     def show_main_menu(self, user_id):
         markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
@@ -125,103 +121,6 @@ class BotManager:
     def show_create_request_menu(self, user_id):
         self.bot.send_message(user_id, "Оберіть параметр для пошуку:", reply_markup=self.generate_keyboard(["📂 Категорія", "🏙 Місто", "💼 Позиція", "⏳ Досвід роботи", "💰 Зарплата", "🔍 Почати пошук!"], 2))
 
-    def pre_checkout_query(self, pre_checkout_query):
-        try:
-           self.bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-        except Exception as e:
-            print(f"Error handling pre_checkout_query: {e}")
-
-    def successful_payment(self, message):
-        payment_info = message.successful_payment
-        payment_details = (f"Chat id: {message.chat.id}\n"
-                           f"Currency: {payment_info.currency}\n"
-                           f"Total amount: {payment_info.total_amount / 100:.2f} {payment_info.currency}\n"
-                           f"Invoice payload: {payment_info.invoice_payload}")
-        print("SUCCESSFUL PAYMENT:", payment_details)
-        self.bot.send_message(message.chat.id, f"Платіж на суму {payment_info.total_amount / 100:.2f} {payment_info.currency} пройшов успішно.")
-
-        if payment_info.invoice_payload == "🔴 Економ":
-            self.pay1_payment_end(message.chat.id)
-        elif payment_info.invoice_payload == "🟠 Стандарт":
-            self.pay2_payment_end(message.chat.id)
-        elif payment_info.invoice_payload == "🟢 Бізнес":
-            self.pay3_payment_end(message.chat.id)
-
-    def pay1_command(self, message):
-        prices = [types.LabeledPrice(label="🔴 Економ", amount=4000)]
-        self.bot.send_invoice(
-            chat_id=message.chat.id,
-            title="🔴 Економ",
-            description="""Створюйте до двох(2) пошукових запитів вакансій на місяць. \nТариф активується автоматично одразу після оплати та триває протягом одного календарного місяця. \nОплачуючи Ви погоджуєтесь з Умовами Користування.""",
-            provider_token=self.payments_token,
-            currency='UAH',
-            photo_url="https://www.aroged.com/wp-content/uploads/2022/06/Telegram-has-a-premium-subscription.jpg", # Фото можна змінити
-            photo_width=416,
-            photo_height=234,
-            photo_size=416,
-            is_flexible=False,
-            prices=prices,
-            max_tip_amount=20000,
-            suggested_tip_amounts=[1000, 5000, 10000],
-            start_parameter='time-machine-subs',
-            invoice_payload='🔴 Економ'
-        )
-
-    def pay2_command(self, message):
-        prices = [types.LabeledPrice(label="🟠 Стандарт", amount=8000)]
-        self.bot.send_invoice(
-            chat_id=message.chat.id,
-            title="🟠 Стандарт",
-            description="""Створюйте до чотирьох(4) пошукових запитів вакансій на місяць. \nТариф активується автоматично одразу після оплати та триває протягом одного календарного місяця. \nОплачуючи Ви погоджуєтесь з Умовами Користування.""",
-            provider_token=self.payments_token,
-            currency='UAH',
-            photo_url="https://www.aroged.com/wp-content/uploads/2022/06/Telegram-has-a-premium-subscription.jpg", # Фото можна змінити
-            photo_width=416,
-            photo_height=234,
-            photo_size=416,
-            is_flexible=False,
-            prices=prices,
-            max_tip_amount=20000,
-            suggested_tip_amounts=[1000, 5000, 10000],
-            start_parameter='time-machine-subs',
-            invoice_payload='🟠 Стандарт'
-        )
-
-    def pay3_command(self, message):
-        prices = [types.LabeledPrice(label="🟢 Бізнес", amount=20000)]
-        self.bot.send_invoice(
-            chat_id=message.chat.id,
-            title="🟢 Бізнес",
-            description="""Створюйте до десяти(10) пошукових запитів вакансій на місяць. \nТариф активується автоматично одразу після оплати та триває протягом одного календарного місяця. \nОплачуючи Ви погоджуєтесь з Умовами Користування.""",
-            provider_token=self.payments_token,
-            currency='UAH',
-            photo_url="https://www.aroged.com/wp-content/uploads/2022/06/Telegram-has-a-premium-subscription.jpg", # Фото можна змінити
-            photo_width=416,
-            photo_height=234,
-            photo_size=416,
-            is_flexible=False,
-            prices=prices,
-            max_tip_amount=20000,
-            suggested_tip_amounts=[1000, 5000, 10000],
-            start_parameter='time-machine-subs',
-            invoice_payload='🟢 Бізнес'
-        )
-
-    def pay1_payment_end(self, chat_id):
-        end_date_subscription = get_end_subscription_date()
-        self.db_manager.execute_query("UPDATE users SET paid_subscription = 1, max_num_of_request = 2, end_date_subscription = %s WHERE chat_id = %s", (end_date_subscription, chat_id))
-        self.bot.send_message(chat_id, "Ваш поточний тариф змінено на Економ.")
-
-    def pay2_payment_end(self, chat_id):
-        end_date_subscription = get_end_subscription_date()
-        self.db_manager.execute_query("UPDATE users SET paid_subscription = 2, max_num_of_request = 4, end_date_subscription = %s WHERE chat_id = %s", (end_date_subscription, chat_id))
-        self.bot.send_message(chat_id, "Ваш поточний тариф змінено на Стандарт.")
-
-    def pay3_payment_end(self, chat_id):
-        end_date_subscription = get_end_subscription_date()
-        self.db_manager.execute_query("UPDATE users SET paid_subscription = 3, max_num_of_request = 10, end_date_subscription = %s WHERE chat_id = %s", (end_date_subscription, chat_id))
-        self.bot.send_message(chat_id, "Ваш поточний тариф змінено на Бізнес.")
-
     def show_user_requests(self, chat_id):
         query = "SELECT * FROM requests WHERE chat_id = %s"
         params = (chat_id,)
@@ -292,7 +191,7 @@ class BotManager:
         if result:
             button = types.InlineKeyboardButton(text="❌ Видалити", callback_data=f"delete_unique_vacancy_{result}")
             markup = types.InlineKeyboardMarkup().add(button)
-            self.bot.send_photo(chat_id, "https://i.ibb.co/ZW5P5PB/hot-vacancy.jpg", reply_markup=markup, caption=format_unique_vacancy(self.users_vacancies.get(chat_id).to_dict()), parse_mode='HTML')
+            self.bot.send_photo(chat_id, "https://i.ibb.co/ZW5P5PB/hot-vacancy.jpg", reply_markup=markup, caption=FormatVacancy.format_unique_vacancy(self.users_vacancies.get(chat_id).convert_to_dictionary()), parse_mode='HTML')
         self.bot.edit_message_reply_markup(chat_id=self.admin_manager.get_main_admin_id(), message_id=call.message.message_id, reply_markup=None)
         self.bot.send_message(self.admin_manager.get_main_admin_id(), "Ви успішно затвердили вакансію, вона додана до DB.")
         del self.users_vacancies[chat_id]
@@ -303,7 +202,7 @@ class BotManager:
         stage = STAGE(self.user_manager.get_stage(message.from_user.id))
 
         if message.text == "🔍 Почати пошук!" and stage==STAGE.CREATE_REQUEST:
-            if self.users_requests.get(message.from_user.id).language == "":
+            if not self.users_requests.get(message.from_user.id) or self.users_requests.get(message.from_user.id).language == "":
               self.bot.send_message(message.from_user.id, "Для того, щоб почати пошук вакансій, необхідно обрати категорію пошуку. Це можна зробити натиснувши кнопку 'Категорія'")
               self.bot.send_message(message.from_user.id, "Оберіть категорію:", reply_markup=self.generate_keyboard(categories, 3))
               self.user_manager.set_stage(message.from_user.id, STAGE.NEXT_PARAM_CATEGORY.value)
@@ -343,6 +242,26 @@ class BotManager:
 
     def handle_default(self, message):
         self.bot.send_message(message.from_user.id, "Спробуйте ввести іншу команду. Введіть /start.")
+
+    def send_job_offer_instructions(self, chat_id):
+        instructions = """
+        Наш бот надає можливість роботодавцям запропонувати свої унікальні вакансії. Ваша вакансія буде позначена як унікальна і матиме додаткову видимість для користувачів.
+
+        <b>Обов'язкові поля для введення:</b>
+        - 📌 Назва вакансії
+        - 📂 Категорія
+        - 📞 Контакт для зв'язку
+
+        <b>Необов'язкові поля:</b>
+        - 📝 Опис
+        - 💰 Заробітна плата
+        - 👔 Необхідний досвід роботи
+
+        Ваша вакансія буде показуватись користувачам протягом 14 днів. Після цього її буде автоматично видалено. Ви також можете видалити вакансію у будь-який момент.
+
+        Після надсилання, менеджер підтвердить вакансію або відхилить її із зазначенням причини.
+        """
+        self.bot.send_message(chat_id, instructions, parse_mode="HTML")
 
     def handle_start(self, message):
         if message.text == "📋 Мої запити":
@@ -417,7 +336,7 @@ f"""Ваш поточний тариф: {subscription_info}
 
             self.bot.send_message(message.from_user.id, about_bot_message, parse_mode="HTML")
         elif message.text == "💼 Запропонувати вакансію":
-            send_job_offer_instructions(self, message.from_user.id)
+            self.send_job_offer_instructions(message.from_user.id)
             self.user_manager.set_stage(message.from_user.id, STAGE.CREATE_UNIQUE_VACANCY.value)
             self.show_create_UV_required_fields_menu(message.from_user.id)
             self.users_vacancies[message.from_user.id] = UniqueVacancy()
@@ -694,15 +613,16 @@ f"""Ваш поточний тариф: {subscription_info}
           threads.append(threading.Thread(target=self.job_search.start_search_and_send_djinni_vacancy, args=(self.users_requests.get(message.from_user.id), message.from_user.id)))
           threads.append(threading.Thread(target=self.job_search.start_search_and_send_robota_vacancy, args=(self.users_requests.get(message.from_user.id), message.from_user.id)))
           threads.append(threading.Thread(target=self.job_search.start_search_and_send_jooble_vacancy, args=(self.users_requests.get(message.from_user.id), message.from_user.id)))
-
+          self.user_manager.set_stage(message.from_user.id, STAGE.START.value)
+          del self.users_requests[message.from_user.id]
           for thread in threads:
               thread.start()
 
           for thread in threads:
               thread.join()
            #start_scheduler()
-          self.user_manager.set_stage(message.from_user.id, STAGE.START.value)
-          del self.users_requests[message.from_user.id]
+
+
         else:
           self.bot.send_message(message.from_user.id, "Такий запит вже існує.")
           self.user_manager.set_stage(message.from_user.id, STAGE.START.value)

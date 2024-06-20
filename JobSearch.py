@@ -11,9 +11,7 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-
-from Vacancy import format_unique_vacancy, format_vacancy
-
+from FormatVacancy import FormatVacancy
 
 class JobSearch:
     def __init__(self, headers, db_manager, bot):
@@ -31,7 +29,7 @@ class JobSearch:
         rounded_down_value = max([value for value in round_values if value <= usd_amount], default=min(round_values))
         return rounded_down_value
 
-    def work(self, url):
+    def work_scraper(self, url):
         jobs = []
         errors = []
         domain = 'https://www.work.ua'
@@ -39,7 +37,7 @@ class JobSearch:
             resp = requests.get(url, headers=self.headers[randint(0, 2)])
             if resp.status_code == 200:
                 soup = BS(resp.content, 'html.parser')
-                main_div = soup.find('div', id='pjax-job-list')
+                main_div = soup.find('div', id='pjax-jobs-list')
                 if main_div:
                     div_lst = main_div.find_all('div', attrs={'class': 'job-link'})
                     target_p = soup.find('p', class_='text-default-7 add-bottom')
@@ -66,12 +64,11 @@ class JobSearch:
                         else:
                             company = spans[0].text
 
+                        img_src = 'https://st.work.ua/i/work-ua-knowledge-graph.jpg'
                         if img_div:
                             img_tag = img_div.find('img')
                             if img_tag:
                                 img_src = img_tag['src']
-                            else:
-                                img_src = 'https://st.work.ua/i/work-ua-knowledge-graph.jpg'
 
                         jobs.append({'title': title.text, 'img_source': img_src, 'url': domain + href,
                                      'description': description, 'company': company,
@@ -96,7 +93,7 @@ class JobSearch:
 
         return image_src
 
-    def dou(self, url, city=None, language=None):
+    def dou_scraper(self, url, city=None, language=None):
         jobs = []
         errors = []
 
@@ -128,7 +125,7 @@ class JobSearch:
 
         return jobs, errors
 
-    def djinni(self, url, city=None, language=None):
+    def djinni_scraper(self, url, city=None, language=None):
         jobs = []
         errors = []
         domain = 'https://djinni.co'
@@ -181,7 +178,7 @@ class JobSearch:
 
         return jobs, errors
 
-    def robota(self, url, language=None):
+    def robota_scraper(self, url, language=None):
         jobs = []
         errors = []
         domain = 'https://robota.ua'
@@ -256,25 +253,6 @@ class JobSearch:
 
         return jobs, errors
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # url = 'https://robota.ua/zapros/java-junior/kyiv'
-    # print(url)
-    # jobs, errors = robota(url)
-    # print(jobs)
-    # print(errors)
-
     def robota_help(self, driver, url, language):
         driver.get(url)
         # Отримання HTML-вмісту сторінки
@@ -291,7 +269,7 @@ class JobSearch:
     def contains_language(self, description, language):
         return language.lower() in description.lower()
 
-    def jooble(self, url):
+    def jooble_scraper(self, url):
         jobs = []
         errors = []
         if url:
@@ -312,17 +290,12 @@ class JobSearch:
                         if p_salary:
                             salary = p_salary.text
                         description = div_info.find('div', class_='PAM72f')
-                        div_title = div.find('div', class_='L4BhzZ')
                         p_company = div.find('p', class_='z6WlhX')
                         company = ''
                         if p_company:
                             company = p_company.text
-                        img = div.find('img', class_='_3hk3rl')
-                        if img and len(img['src']) < 2048:
-                            img_src = img['src']
-                        else:
-                            img_src = 'https://play-lh.googleusercontent.com/JCQ1opom-Kay8f3xVs9VfKmDKsKD3md5uKLJf93gsYAawE6UpzgN_2fALgS0mKOcNw=s256-rw'
-                        # print(jooble_help(href, language))
+                        img_src = 'https://play-lh.googleusercontent.com/JCQ1opom-Kay8f3xVs9VfKmDKsKD3md5uKLJf93gsYAawE6UpzgN_2fALgS0mKOcNw=s256-rw'
+
                         if len(href) < 2048:
                             jobs.append({'title': title, 'img_source': img_src, 'url': href,
                                          'description': description.text, 'company': company,
@@ -357,7 +330,7 @@ class JobSearch:
             days=days
         )
         print("WORKUA URL: ", url_work)
-        jobs_work, errors_work = self.work(url_work)
+        jobs_work, errors_work = self.work_scraper(url_work)
         print("WORKUA: ", jobs_work)
         print("WORKUA: ", errors_work)
         if not on_the_background:
@@ -370,7 +343,7 @@ class JobSearch:
         url_dou = self.url_manage.build_url_dou(search=request.language, position=request.position, city=request.city,
                                                 exp=request.experience)  # в доу можна скрапить і по 0-1 і по 1-3, тоже нужно решить проблему
         print("DOU URL: ", url_dou)
-        jobs_dou, errors_dou = self.dou(url_dou)
+        jobs_dou, errors_dou = self.dou_scraper(url_dou)
         print("DOU", jobs_dou)
         print("DOU", errors_dou)
         if not on_the_background:
@@ -391,7 +364,7 @@ class JobSearch:
             keywords=request.language
         )
         print("DJINNI URL: ", url_djinni)
-        jobs_djinni, errors_djinni = self.djinni(url_djinni)
+        jobs_djinni, errors_djinni = self.djinni_scraper(url_djinni)
         self.add_vacancies_to_db(request, chat_id, jobs_djinni, "djinni")
         print("DJINNI", jobs_djinni)
         print("DJINNI", errors_djinni)
@@ -405,7 +378,7 @@ class JobSearch:
                                                       position=request.position, salary=request.min_salary,
                                                       experience=request.experience)
         print("ROBOTA URL: ", url_robota)
-        jobs_rabota, errors_robota = self.robota(url_robota, language=request.language)
+        jobs_rabota, errors_robota = self.robota_scraper(url_robota, language=request.language)
         print("ROBOTA: ", jobs_rabota)
         print("ROBOTA: ", errors_robota)
         if not on_the_background:
@@ -426,7 +399,7 @@ class JobSearch:
                                                       workExp=request.experience
                                                       )
         print("JOOBLE URL: ", url_jooble)
-        jobs_jooble, errors_jooble = self.jooble(url_jooble)
+        jobs_jooble, errors_jooble = self.jooble_scraper(url_jooble)
         # print("JOOBLE: ", jobs_jooble)
         # print("JOOBLE: ", errors_jooble)
         if not on_the_background:
@@ -442,11 +415,13 @@ class JobSearch:
             try:
                 # print("job['img_source'] = ", job['img_source'])
                 if is_unique_vacancy:
-                    caption_ = format_unique_vacancy(job)
+                    caption_ = FormatVacancy.format_unique_vacancy(job)
+                    print("job['img_source']", job['img_source'])
                     self.bot.send_photo(chat_id, job['img_source'], caption=caption_, parse_mode='HTML')
                 else:
-                    caption_, markup_ = format_vacancy(job)
+                    caption_, markup_ = FormatVacancy.format_vacancy(job)
                     try:
+
                         self.bot.send_photo(chat_id, job['img_source'], caption=caption_, reply_markup=markup_,
                                        parse_mode='HTML')
                     except Exception as e:

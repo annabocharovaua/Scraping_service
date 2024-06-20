@@ -4,6 +4,7 @@ from AdminManager import AdminManager
 from BotManager import BotManager
 from DatabaseManager import DatabaseManager
 from JobScheduler import JobScheduler
+from PaymentManager import PaymentManager
 from Request import Request
 from UserManager import UserManager
 from config import db_config

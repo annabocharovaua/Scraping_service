@@ -69,7 +69,7 @@ class UniqueVacancy:
             info += "Зображення: Не додано\n"
         return info
 
-    def to_dict(self):
+    def convert_to_dictionary(self):
         end_date = datetime.now().date() + relativedelta(days=14)
         return {
             "technology": self.category,
@@ -116,7 +116,6 @@ def get_unique_vacancies_from_db(request, db_manager):
     if request.experience != EXPERIENCE.DEFAULT_VALUE.value: query += f"and (experience = {request.experience} or experience = -2)";
     # print(query)
     result = db_manager.execute_query(query)
-    print(result)
     formatted_vacancies = []
     for vacancy in result:
         # print(vacancy)

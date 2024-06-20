@@ -24,10 +24,16 @@ class Request:
     self.position = position
 
   def set_min_salary(self, min_salary):
-    self.min_salary = int(min_salary)
+    try:
+      self.min_salary = int(min_salary)
+    except ValueError:
+      print("Min salary must be a valid integer string")
 
   def set_experience(self, experience):
-    self.experience = int(experience)
+    try:
+      self.experience = int(experience)
+    except ValueError:
+      print("Experience must be a valid integer string")
 
 
   def add_request_to_db(self, chat_id, db_manager):
