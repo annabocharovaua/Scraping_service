@@ -9,11 +9,18 @@ nontechnical_specialties = ["Повернутися в головне меню",
 
 db_config = {
     "host": "eu-cluster-west-01.k8s.cleardb.net",
-    "user": "ba14957429faae",
-    "password": "b31894be",
-    "database": "heroku_1eb8c73e29d3934"
+    "user": "bd6b7b34a39efb",
+    "password": "eff5a6b2",
+    "database": "heroku_79c391832132e62"
 }
 
+# db_config = {
+#     "host": "127.0.0.1",
+#     "port": 3306,
+#     "user": "root",
+#     "password": "root",
+#     "database": "scraping_service"
+# }
 
 headers = [
     {'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:47.0) Gecko/20100101 Firefox/47.0',
